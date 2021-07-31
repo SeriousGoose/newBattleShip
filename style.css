@@ -1,9 +1,48 @@
+@font-face {
+  font-family: tronFont;
+  src: url(/Fonts/tr2n/Tr2n.ttf);
+}
+
+body {
+  font-family: tronFont;
+  font-size: 40px;
+  color: green;
+  background-color: black;
+  display: flex;
+  max-width: 960px;
+  justify-content: center;
+}
+#container {
+  max-width: 480px;
+}
+#game {
+  display: none;
+}
+#battleShip {
+  margin-bottom: 50px;
+}
+#modalBox {
+  border-radius: 5px;
+  padding: 20px;
+  border: 2px solid green;
+}
+#modalForm {
+  text-align: center;
+}
+
 #fullBoard {
   display: flex;
 }
-
+#battleShip {
+  font-size: 75px;
+}
 .players {
   margin: 20px;
+  min-width: 240px;
+  max-width: 240px;
+}
+#computer {
+  display: none;
 }
 
 .gameBoard {
@@ -23,8 +62,9 @@
   width: 20px;
   background-color: black;
 }
-.ComputerShip {
-  /*background-color: rgb(236, 255, 223);*/
+
+.showShip {
+  background-color: blue;
 }
 .playerShip {
   background-color: rgb(236, 255, 223);
@@ -37,9 +77,13 @@
   background-color: red;
 }
 
-/* .hover:hover {
+.hover:hover {
   background-color: green;
 }
 .hit:hover {
   background-color: red;
-} */
+}
+@font-face {
+  font-family: tronFont;
+  src: url(/home/cameron/the-odin-project/newBattleShip/Fonts/tr2n/Tr2n.ttf);
+}

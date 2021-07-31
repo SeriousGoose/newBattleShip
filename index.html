@@ -9,43 +9,45 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
-        <div id = "orientation">
-            <button id = 'orientationBtn'>Change Orientation</button>
-            <div id = 'showOrientation'>Horizontal</div>
-        </div>
-        <div id = "display">Player One, Place Your Carrier</div>
-        <div id = "fullBoard">
-            <div class = "players" id = "player">
-                <div>
-                <div id = "playerName">
-                    Enemy Board
+        <div id = "container">
+            <div id = "battleShip">BattleShip</div>
+            <div id = "game">
+                <div id = "display"></div>
+                <div id = "orientation">
+                    <button id = 'orientationBtn'>Change Orientation</button>
+                    <div id = 'showOrientation'>Horizontal</div>
                 </div>
-                <div id = "playerTracker">
-                    
-                </div>
-                </div>
-                <div class = "gameBoard" id = "playerBoard">
-                </div>
-                <div id = 'screenTwo'>
-                    Let's Play!
-                </div>
-            </div>
-            <div class = "players" id = "computer">
-                <div>
-                <div id = "computerName">
-                    Your Board
-                </div>
-                <div id = "computerTracker">
-
-                </div>
-                </div>
-                <div class = "gameBoard" id = "computerBoard">
-                </div>
-                <div id = 'screenOne'>
-                    
+                <div id = "fullBoard">
+                    <div class = "players" id = "player">
+                        <div id = "playerHeader">
+                            <div id = "playerName"></div>
+                            <div id = "playerTracker"></div>
+                        </div>
+                        <div class = "gameBoard" id = "playerBoard"></div>
+                        <div id = 'screenTwo'></div>
+                    </div>
+                    <div class = "players" id = "computer">
+                        <div>
+                            <div id = "computerName"></div>
+                            <div id = "computerTracker"></div>
+                        </div>
+                        <div class = "gameBoard" id = "computerBoard"></div>
+                        <div id = 'screenOne'></div>
+                    </div>
                 </div>
             </div>
-        </div>
+            <div id = "modal">
+                <div id = "fullScreenModal">
+                    <div id = "modalBox">
+                        <div id = "modalForm">
+                            <div id = "modalQuestion">Good Day Captain! <br><br>What name will strike fear into our binary nemesis' circuit boards? </div>
+                            <br>
+                            <input id = "modalAnswer" placeholder="Enter Your Name">
+                            <button id = "modalSubmit">Submit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <script src="myscript.js" async defer></script>
