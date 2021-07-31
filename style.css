@@ -1,0 +1,45 @@
+#fullBoard {
+  display: flex;
+}
+
+.players {
+  margin: 20px;
+}
+
+.gameBoard {
+  display: grid;
+  grid-template-columns: repeat(10, 20px);
+}
+
+.player {
+  border: solid 1px green;
+  height: 20px;
+  width: 20px;
+  background-color: black;
+}
+.newDivComputer {
+  border: solid 1px green;
+  height: 20px;
+  width: 20px;
+  background-color: black;
+}
+.ComputerShip {
+  /*background-color: rgb(236, 255, 223);*/
+}
+.playerShip {
+  background-color: rgb(236, 255, 223);
+}
+.attacked {
+  background-color: green;
+}
+
+.hit {
+  background-color: red;
+}
+
+/* .hover:hover {
+  background-color: green;
+}
+.hit:hover {
+  background-color: red;
+} */
