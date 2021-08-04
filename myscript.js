@@ -73,12 +73,7 @@ function createGameBoard(player, opponentTracker, display, opponent, info, name)
                 row: row,
                 column: column
             }
-            let random = Math.floor(Math.random() * 2)
-            if (random == 0) {
-                randomOrientation = "Vertical"
-            } else {
-                randomOrientation = "Horizontal";
-            }
+            let randomOrientation = this.randomOrientation();
             let newRow = this.gameBoardRows[Math.floor(Math.random() * (this.gameBoardRows.length))];
             let newColumn = Math.floor(Math.random() * this.gameBoardColumns);
             let index = this.gameBoard.findIndex(cells =>
@@ -100,6 +95,7 @@ function createGameBoard(player, opponentTracker, display, opponent, info, name)
                                     this.gameBoard[index + (i * 10)].ship = newShip.shipType;
                                 }
                                 this.ships.push(newShip);
+                                this.shipCount++
                             } else {
                                 throw error;
                             }
@@ -121,6 +117,7 @@ function createGameBoard(player, opponentTracker, display, opponent, info, name)
                                     this.gameBoard[index + i].ship = newShip.shipType;
                                 }
                                 this.ships.push(newShip);
+                                this.shipCount++;
                             } else {
                                 throw error;
                             }
@@ -133,7 +130,9 @@ function createGameBoard(player, opponentTracker, display, opponent, info, name)
                     throw error;
                 }
             } catch (error) {
-                this.makeShips(newRow, newColumn, element, randomOrientation)
+                if(this.player == "Computer"){
+                    this.makeShips(newRow, newColumn, element, randomOrientation)
+                } 
             }
         },
         receiveAttack(row, column) {
@@ -148,10 +147,12 @@ function createGameBoard(player, opponentTracker, display, opponent, info, name)
             }
             if (this.gameBoard[index].ship != undefined && this.gameBoard[index].attacked == undefined) {
                 this.gameBoard[index].attacked = true;
+                this.gameBoard[index].hit = true;
                 let shipIndex = this.ships.findIndex(findShip)
                 this.ships[shipIndex].hit()
                 this.ships[shipIndex].isSunk()
                 if (this.ships[shipIndex].isSunk() == true) {
+                    this.updateSunkShips();
                     this.shipTracker();
                     if(this.player == "Computer"){
                         display.innerHTML = "Direct Hit!"
@@ -177,19 +178,13 @@ function createGameBoard(player, opponentTracker, display, opponent, info, name)
             } else if (this.gameBoard[index].attacked == undefined) {
                 this.gameBoard[index].attacked = true;
                 display.innerHTML = "Miss!"
-            } else {
-            }
+            } 
         },
         populateShips() {
             this.shipTypes.forEach(element => {
                 let randomRow = this.gameBoardRows[Math.floor(Math.random() * (this.gameBoardRows.length))];
                 let randomColumn = Math.floor(Math.random() * this.gameBoardColumns);
-                let random = Math.floor(Math.random() * 2)
-                if (random == 0) {
-                    randomOrientation = "Vertical"
-                } else {
-                    randomOrientation = "Horizontal";
-                }
+                let randomOrientation =this.randomOrientation();
                 this.makeShips(randomRow, randomColumn, element, randomOrientation)
 
             })
@@ -197,12 +192,12 @@ function createGameBoard(player, opponentTracker, display, opponent, info, name)
         },
         placeShips() {
             let divs = document.querySelectorAll('.newDiv' + this.player)
+            this.hoverShips(divs);
             divs.forEach(element => {
                 element.addEventListener('click', () => {
                     if (this.shipCount < this.shipTypes.length) {
                         let item = this.gameBoard[element.id]
                         this.makeShips(item.row, item.column, this.shipTypes[this.shipCount], this.chosenOrientation)
-                        this.shipCount++
                         this.showShips('.newDiv' + this.player);
                         if (this.shipTypes[this.shipCount] != undefined) {
                             info.innerHTML = this.player + " , Place Your " + this.shipTypes[this.shipCount].name;
@@ -217,6 +212,51 @@ function createGameBoard(player, opponentTracker, display, opponent, info, name)
                 })
             })
         },
+        hoverShips(div){
+            div.forEach(element => {
+               element.addEventListener('mouseenter', () => {
+                   if(this.allShipsPlaced == false){
+                        let index = parseInt(element.id)
+                        let column = this.gameBoard[index].column;
+                        let length = this.shipTypes[this.shipCount].length
+                        if (this.chosenOrientation == 'Vertical') {
+                            if (this.gameBoard[index + (length * 10)] != undefined) {
+                                let verticalCheck = true;
+                                for (i = 0; i < length; i++) {
+                                    if (this.gameBoard[index + (i * 10)].ship != undefined) {
+                                        verticalCheck = false;
+                                    }
+                                }
+                                if (verticalCheck == true) {
+                                    for (i = 0; i < length; i++) {
+                                        div[index + (i * 10)].classList.add('placeShip')
+                                    }
+                                } 
+                            } 
+                    
+                        } else if (this.chosenOrientation == "Horizontal") {
+                            if (column + length <= 10) {
+                                let horizontalCheck = true;
+                                for (i = 0; i < length; i++)
+                                    if (this.gameBoard[index + i].ship != undefined) {
+                                        horizontalCheck = false
+                                    }
+                                if (horizontalCheck == true) {
+                                    for (i = 0; i < length; i++) {
+                                        div[index + i].classList.add('placeShip')
+                                    }
+                                } 
+                            } 
+                        }
+                   }
+               })
+               element.addEventListener('mouseleave', () => {
+                   div.forEach(item => {
+                       item.classList.remove('placeShip');
+                   })
+               })
+           })
+       },
         showShips(selectClass) {
             let divs = document.querySelectorAll(selectClass)
             this.gameBoard.forEach(element => {
@@ -234,7 +274,6 @@ function createGameBoard(player, opponentTracker, display, opponent, info, name)
                 newDiv.setAttribute('id', divId)
                 newDiv.classList.add('newDiv' + this.player)
                 if (this.player != "Computer") {
-
                     newDiv.classList.add('player')
                 }
                 if (element.ship != undefined) {
@@ -275,24 +314,28 @@ function createGameBoard(player, opponentTracker, display, opponent, info, name)
             } else { info.innerHTML = "Please place all ships" }
         },
         computerAttack() {
+            this.assignProbability();
+            this.viableShipPlacement();
+            let randomIndex = this.determinHighestProbability();
             let divs = document.querySelectorAll('.newDiv' + this.player)
-            let randomIndex = Math.floor(Math.random() * this.gameBoard.length);
             if (this.attacks.includes(randomIndex) == false) {
                 let randomRow = this.gameBoard[randomIndex].row;
                 let randomColumn = this.gameBoard[randomIndex].column;
-                this.receiveAttack(randomRow, randomColumn, display)
-                this.attacks.push(randomIndex)
-                divs.forEach(element => {
-                    if (element.id == randomIndex) {
-                        let item = this.gameBoard[randomIndex]
-                        if (item.ship != undefined) {
-                            element.classList.add('hit');
+                if(this.gameOver == false){
+                    this.receiveAttack(randomRow, randomColumn, display)
+                    this.attacks.push(randomIndex)
+                    divs.forEach(element => {
+                        if (element.id == randomIndex) {
+                            let item = this.gameBoard[randomIndex]
+                            if (item.ship != undefined) {
+                                element.classList.add('hit');
+                            }
+                            else {
+                                element.classList.add('attacked');
+                            }
                         }
-                        else {
-                            element.classList.add('attacked');
-                        }
-                    }
-                })
+                    })
+                }
             } else {
                 this.computerAttack();
             }
@@ -340,6 +383,252 @@ function createGameBoard(player, opponentTracker, display, opponent, info, name)
         updateScreens(){
             this.setName();
             this.setMessage();
+        },
+        randomOrientation(){
+            let randomOrientation = Math.floor(Math.random() * 2)
+            
+            if (randomOrientation == 0) {
+                randomOrientation = "Vertical"
+            } else {
+                randomOrientation = "Horizontal";
+            }
+            return randomOrientation;
+        },
+        assignProbability(){
+            let totalHits = 0
+            this.ships.forEach(element => {
+                totalHits = element.hitsTaken + totalHits;
+            })
+            let shipsLeft = 17-totalHits
+            let spacesLeft = 100 - this.attacks.length;
+            let baseProbability = shipsLeft/spacesLeft;
+
+            this.gameBoard.forEach(element => {
+                element.probability = 0;
+                if(element.attacked == undefined){
+                    let index = this.gameBoard.indexOf(element);
+                    element.probability = baseProbability;
+                    if(index +1 <= 99 && this.gameBoard[index].row == this.gameBoard[index+1].row){
+                        if(this.gameBoard[index+1].hit == true && this.gameBoard[index+1].isSunk == undefined){
+                            element.probability += .25;
+                        }
+                    }
+                    if(index + 2 <=99 && this.gameBoard[index].row == this.gameBoard[index+2].row){
+                        if(this.gameBoard[index+2].hit != undefined && this.gameBoard[index+2].isSunk == undefined){
+                            element.probability += .1;
+                        }
+                    }
+                    if(index + 3 <=99 && this.gameBoard[index].row == this.gameBoard[index+3].row){
+                        if(this.gameBoard[index+3].hit == true && this.gameBoard[index+3].isSunk == undefined){
+                            element.probability += .05;
+                        }
+                    }
+                    if(index + 4 <=99 && this.gameBoard[index].row == this.gameBoard[index+4].row){
+                        if(this.gameBoard[index+4].hit == true && this.gameBoard[index+4].isSunk == undefined){
+                            element.probability += .025;
+                        }
+                    }
+                    if(index-1>=0 && this.gameBoard[index].row == this.gameBoard[index-1].row){
+                        if(this.gameBoard[index-1].hit ==true && this.gameBoard[index-1].isSunk == undefined){
+                            element.probability += .25;
+                        }
+                    }
+                    if(index -2 >= 0 && this.gameBoard[index].row == this.gameBoard[index-2].row){
+                        if(this.gameBoard[index-2].hit == true && this.gameBoard[index-2].isSunk == undefined){
+                            element.probability += .1;
+                        }
+                    }
+                    if(index -3>=0 && this.gameBoard[index].row == this.gameBoard[index-3].row){
+                        if(this.gameBoard[index-3].hit == true && this.gameBoard[index-3].isSunk == undefined){
+                            element.probability += .05;
+                        }
+                    }
+                    if(index -4 >= 0 && this.gameBoard[index].row == this.gameBoard[index-4].row){
+                        if(this.gameBoard[index-4].hit == true && this.gameBoard[index-4].isSunk == undefined){
+                            element.probability += .025;
+                        }
+                    } 
+                    if(index+10 <= 99){
+                        if(this.gameBoard[index+10].hit ==true && this.gameBoard[index+10].isSunk == undefined){
+                            element.probability += .25;
+                        }
+                    }
+                    if(index + 20 <=99){
+                        if(this.gameBoard[index+20].hit == true && this.gameBoard[index+20].isSunk == undefined){
+                            element.probability += .1;
+                        }
+                    }
+                    if(index + 30 <=99){
+                        if(this.gameBoard[index+30].hit == true && this.gameBoard[index+30].isSunk == undefined){
+                            element.probability += .05;
+                        }
+                    }
+                    if(index + 40 <=99){
+                        if(this.gameBoard[index+40].hit == true && this.gameBoard[index+40].isSunk == undefined){
+                            element.probability += .025;
+                        }
+                    }
+                    if(index-10>=0){
+                        if(this.gameBoard[index-10].hit ==true && this.gameBoard[index-10].isSunk == undefined){
+                            element.probability += .25;
+                        }
+                    }
+                    if(index -20 >= 0){
+                        if(this.gameBoard[index-20].hit == true && this.gameBoard[index-20].isSunk == undefined){
+                            element.probability += .1;
+                        }
+                    }
+                    if(index -30>=0){
+                        if(this.gameBoard[index-30].hit == true && this.gameBoard[index-30].isSunk == undefined){
+                            element.probability += .05;
+                        }
+                    }
+                    if(index -40 >= 0){
+                        if(this.gameBoard[index-40].hit == true && this.gameBoard[index-40].isSunk == undefined){
+                            element.probability += .025;
+                        }
+                    }
+                } 
+            })
+        },
+        determinHighestProbability(){
+            let highestProbability = 0;
+            let allProbabilities = []
+            function checkProbabilities (probability){
+                    return probability == highestProbability
+            }
+            let index
+            this.gameBoard.forEach(element => {
+                if(element.probability != 0){
+                    allProbabilities.push(element.probability)
+                }
+                if(element.probability > highestProbability){
+                    highestProbability = element.probability
+                    index = this.gameBoard.indexOf(element)
+                }
+            })
+            if(allProbabilities.every(checkProbabilities)){
+                index = Math.floor(Math.random() * this.gameBoard.length);
+            }
+            return index
+        },
+        updateSunkShips(){
+            this.ships.forEach(element =>{
+                if(element.isSunk() == true){
+                    this.gameBoard.forEach(item => {
+                        if(item.ship == element.shipType){
+                            item.isSunk = true;
+                        }
+                    })
+                }
+            })
+        },
+        viableShipPlacement(){
+            let longestShip = this.longestShip();
+            console.log(longestShip)
+            this.gameBoard.forEach(element => {
+                let horizontalTiles = 1;
+                let verticalTiles = 1;
+                let index = this.gameBoard.indexOf(element)
+                if(this.gameBoard[index].attacked ==undefined){
+                    if(index +1 <= 99 && this.gameBoard[index].row == this.gameBoard[index+1].row){
+                        if(this.gameBoard[index+1].attacked == undefined || this.gameBoard[index+1].hit == true && this.gameBoard[index+1].isSunk == undefined){
+                            horizontalTiles++
+                            if(index + 2 <=99 && this.gameBoard[index].row == this.gameBoard[index+2].row){
+                                if(this.gameBoard[index+2].attacked == undefined || this.gameBoard[index+2].hit == true && this.gameBoard[index+2].isSunk == undefined){
+                                    horizontalTiles++
+                                    if(index + 3 <=99 && this.gameBoard[index].row == this.gameBoard[index+3].row){
+                                        if(this.gameBoard[index+3].attacked == undefined || this.gameBoard[index+3].hit == true && this.gameBoard[index+3].isSunk == undefined){
+                                            horizontalTiles++
+                                            if(index + 4 <=99 && this.gameBoard[index].row == this.gameBoard[index+4].row){
+                                                if(this.gameBoard[index+4].attacked == undefined || this.gameBoard[index+4].hit == true && this.gameBoard[index+4].isSunk == undefined){
+                                                    horizontalTiles++ 
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if(index-1>=0 && this.gameBoard[index].row == this.gameBoard[index-1].row){
+                        if(this.gameBoard[index-1].attacked == undefined || this.gameBoard[index-1].hit == true && this.gameBoard[index+1].isSunk == undefined){
+                            horizontalTiles++
+                            if(index-2>=0 && this.gameBoard[index].row == this.gameBoard[index-2].row){
+                                if(this.gameBoard[index-2].attacked == undefined || this.gameBoard[index-2].hit == true && this.gameBoard[index-2].isSunk == undefined){
+                                    horizontalTiles++
+                                    if(index-3>=0 && this.gameBoard[index].row == this.gameBoard[index-3].row){
+                                        if(this.gameBoard[index-3].attacked == undefined || this.gameBoard[index-3].hit == true && this.gameBoard[index-3].isSunk == undefined){
+                                            horizontalTiles++
+                                            if(index-4>=0 && this.gameBoard[index].row == this.gameBoard[index-4].row){
+                                                if(this.gameBoard[index-4].attacked == undefined || this.gameBoard[index-4].hit == true && this.gameBoard[index-4].isSunk == undefined){
+                                                    horizontalTiles++
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if(index+10 <= 99){
+                        if(this.gameBoard[index+10].attacked == undefined || this.gameBoard[index+10].hit == true && this.gameBoard[index+10].isSunk == undefined){
+                            verticalTiles++
+                            if(index+20 <= 99){
+                                if(this.gameBoard[index+20].attacked == undefined || this.gameBoard[index+20].hit == true && this.gameBoard[index+20].isSunk == undefined){
+                                    verticalTiles++
+                                    if(index+30 <= 99){
+                                        if(this.gameBoard[index+30].attacked == undefined || this.gameBoard[index+30].hit == true && this.gameBoard[index+30].isSunk == undefined){
+                                            verticalTiles++
+                                            if(index+40 <= 99){
+                                                if(this.gameBoard[index+40].attacked == undefined || this.gameBoard[index+40].hit == true && this.gameBoard[index+40].isSunk == undefined){
+                                                    verticalTiles++
+                                                    
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if(index-10>=0){
+                        if(this.gameBoard[index-10].attacked == undefined || this.gameBoard[index-10].hit == true && this.gameBoard[index-10].isSunk == undefined){
+                            verticalTiles++
+                            if(index-20>=0){
+                                if(this.gameBoard[index-20].attacked == undefined || this.gameBoard[index-20].hit == true && this.gameBoard[index-20].isSunk == undefined){
+                                    verticalTiles++
+                                    if(index-30>=0){
+                                        if(this.gameBoard[index-30].attacked == undefined || this.gameBoard[index-30].hit == true && this.gameBoard[index-30].isSunk == undefined){
+                                            verticalTiles++
+                                            if(index-40>=0){
+                                                if(this.gameBoard[index-40].attacked == undefined || this.gameBoard[index-40].hit == true && this.gameBoard[index-40].isSunk == undefined){
+                                                    verticalTiles++
+                                                    
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if(verticalTiles < longestShip && horizontalTiles < longestShip){
+                    element.probability = 0;
+                }     
+            }) 
+        },
+        longestShip(){
+            let longestShip = 2
+            this.ships.forEach(element => {
+                if(element.isSunk() ==false){
+                    if(element.shipLength > longestShip){
+                        longestShip = element.shipLength
+                    }
+                }
+            })  
+            return longestShip
         }
     }
 }
@@ -400,10 +689,5 @@ function startGame() {
 
 startGame();
 
-
-
-
-
-
-
 module.exports = { createShip, createGameBoard }
+
